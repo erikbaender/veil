@@ -31,13 +31,13 @@ jobs:
         with:
           packages: "platforms;android-37.0 build-tools;37.0.0"
       - uses: gradle/actions/setup-gradle@v4
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: java-kotlin
           build-mode: manual
           queries: security-extended
       - name: Build
         run: ./gradlew --no-daemon :androidApp:assembleDebug :core:allTests
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
         with:
           category: /language:java-kotlin
