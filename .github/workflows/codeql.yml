@@ -1,5 +1,6 @@
 # Code scanning: CodeQL analyses the Kotlin and Java code on every push and pull request to
-# main, and weekly. Findings show up under the repository's Security tab.
+# main, and weekly. Findings show up under the repository's Security tab (for a private repository
+# that needs GitHub Code Security; public repositories get it free).
 name: CodeQL
 
 on:
@@ -18,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       security-events: write
+      actions: read
       contents: read
     steps:
       - uses: actions/checkout@v4
