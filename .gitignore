@@ -1,0 +1,13 @@
+.gradle/
+.kotlin/
+build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+captures/
+*.keystore
+*.jks
+# Never commit real sessions or credentials
+**/session*.json
+**/credentials*.env

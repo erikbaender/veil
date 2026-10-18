@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Serializes Gradle builds across parallel worktrees/agents so concurrent daemons
+# don't exhaust the machine's memory. Usage: tools/gradlew-locked <tasks...>
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+exec flock /tmp/veil-gradle.lock "$root/gradlew" -p "$root" --console=plain "$@"

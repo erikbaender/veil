@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon version: the system tints it; only alpha matters. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M54,43a17,17 0,1 1,0 34a17,17 0,1 1,0 -34z"
+        android:strokeWidth="5.5"
+        android:strokeColor="#FFFFFFFF"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M20,30H88V44C76,46 66,52 56.6,65.6Q54,68.6 51.4,65.6C42,52 32,46 20,44Z"
+        android:fillColor="#99FFFFFF" />
+</vector>
