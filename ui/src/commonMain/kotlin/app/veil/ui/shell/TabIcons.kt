@@ -85,34 +85,39 @@ internal object TabIcons {
         stroke(1.2f) { rounded(housePoints, houseRadii) }
     }
 
-    // Reels: rounded square "film" with a header band, two slanted perforations and a play triangle.
-    private fun PathBuilder.reelsFrame() {
-        moveTo(7.6f, 2.8f); horizontalLineTo(16.4f)
-        arcTo(4.8f, 4.8f, 0f, false, true, 21.2f, 7.6f); verticalLineTo(16.4f)
-        arcTo(4.8f, 4.8f, 0f, false, true, 16.4f, 21.2f); horizontalLineTo(7.6f)
-        arcTo(4.8f, 4.8f, 0f, false, true, 2.8f, 16.4f); verticalLineTo(7.6f)
-        arcTo(4.8f, 4.8f, 0f, false, true, 7.6f, 2.8f); close()
+    // Reels: a stack of portrait video cards (swipe to the next) with a play triangle on the front one.
+    private fun PathBuilder.frontCard() {
+        moveTo(6.8f, 6.6f); horizontalLineTo(12f)
+        arcTo(3.4f, 3.4f, 0f, false, true, 15.4f, 10f); verticalLineTo(17.8f)
+        arcTo(3.4f, 3.4f, 0f, false, true, 12f, 21.2f); horizontalLineTo(6.8f)
+        arcTo(3.4f, 3.4f, 0f, false, true, 3.4f, 17.8f); verticalLineTo(10f)
+        arcTo(3.4f, 3.4f, 0f, false, true, 6.8f, 6.6f); close()
     }
-    private val playPoints = listOf(P(9.8f, 11.3f), P(15.4f, 14.6f), P(9.8f, 17.9f))
-    private val playRadii = listOf(1f, 1f, 1f)
+
+    /** The part of the card behind that shows above and beside the front one. */
+    private fun PathBuilder.backCard() {
+        moveTo(8.2f, 6.6f); verticalLineTo(6.2f)
+        arcTo(3.4f, 3.4f, 0f, false, true, 11.6f, 2.8f); horizontalLineTo(17f)
+        arcTo(3.4f, 3.4f, 0f, false, true, 20.4f, 6.2f); verticalLineTo(14.4f)
+        arcTo(3.4f, 3.4f, 0f, false, true, 17f, 17.8f); horizontalLineTo(15.4f)
+    }
+    private val playPoints = listOf(P(7.2f, 10.8f), P(12.3f, 13.9f), P(7.2f, 17f))
+    private val playRadii = listOf(0.9f, 0.9f, 0.9f)
 
     val reels = icon("reels") {
         stroke(THIN) {
-            reelsFrame()
-            moveTo(3.2f, 8.2f); horizontalLineTo(20.8f)
-            moveTo(8.9f, 3.2f); lineTo(11.4f, 8f)
-            moveTo(14.4f, 3.2f); lineTo(16.9f, 8f)
+            frontCard()
+            backCard()
         }
         solid { rounded(playPoints, playRadii) }
     }
     val reelsSelected = icon("reels.selected") {
         solid {
-            reelsFrame()
-            slot(2.8f, 8.2f, 21.2f, 8.2f, 1.6f)
-            slot(9.2f, 3.6f, 11.1f, 7.2f, 1.6f)
-            slot(14.7f, 3.6f, 16.6f, 7.2f, 1.6f)
+            frontCard()
             rounded(playPoints, playRadii)
         }
+        stroke(1f) { frontCard() }
+        stroke(BOLD - 0.2f) { backCard() }
     }
 
     // Messages: rounded paper plane with a crease from the nose towards the inner wing.

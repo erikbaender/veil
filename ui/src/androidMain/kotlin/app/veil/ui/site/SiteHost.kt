@@ -1158,7 +1158,8 @@ internal class SiteHost(
                 val sample = memory.read()
                 log("dump: account=$account selected=$selected shown=${describe(active)} cap=${budget.cap} ceiling=${budget.ceiling} " +
                     "free=${sample.availableBytes / MIB}MB threshold=${sample.thresholdBytes / MIB}MB " +
-                    "deaths=${session.engineDeaths.size} locked=${controller.tabsLocked} challenge=${session.challengeSeen}")
+                    "deaths=${session.engineDeaths.size} locked=${controller.tabsLocked} challenge=${session.challengeSeen} " +
+                    "appNameHeader=${if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) "off" else "unsupported"}")
                 allPages().forEach { page ->
                     val visibility = page.eval("document.visibilityState", 500)
                     log("  ${describe(page)}: shown=${page === active} settled=${page.settled} loading=${page.loading} " +

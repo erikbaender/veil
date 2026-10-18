@@ -6,6 +6,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
+import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewFeature
 import app.veil.core.web.HostPolicy
 import java.io.ByteArrayInputStream
 
@@ -27,6 +29,11 @@ internal fun WebView.applyHardening() {
         mediaPlaybackRequiresUserGesture = false
         mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         safeBrowsingEnabled = false
+    }
+    // Android's WebView can tell every site which app it runs in (the X-Requested-With header,
+    // carrying Veil's package name). Instagram doesn't need to know; send it nowhere.
+    if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
+        WebSettingsCompat.setRequestedWithHeaderOriginAllowList(settings, emptySet())
     }
 }
 
