@@ -79,6 +79,12 @@ object ReelSave {
             button.style.opacity = button.dataset.veilBusy ? '0.5' : '';
           }
 
+          function bind(button, code) {
+            if (!code || button.dataset.veilCode === code) return;
+            button.dataset.veilCode = code;
+            delete button.dataset.veilBusy;
+          }
+
           function paintAll() {
             document.querySelectorAll('[data-veil-save]').forEach(paint);
           }
@@ -98,9 +104,11 @@ object ReelSave {
             return null;
           }
 
-          function onScreen(el) {
+          // The reel being watched: its action column is wholly in view. Neighbours the viewer has
+          // already rendered are at most partly in view, so they never take the address's code.
+          function watched(el) {
             var r = el.getBoundingClientRect();
-            return r.width > 0 && r.bottom > 0 && r.top < window.innerHeight;
+            return r.width > 0 && r.top >= 0 && r.bottom <= window.innerHeight;
           }
 
           function scan() {
@@ -108,8 +116,9 @@ object ReelSave {
             if (document.visibilityState === 'hidden') return;
             var code = currentCode();
             if (!code) return;
+            // Every reel the viewer has rendered gets its button, including the ones still below the
+            // fold: scrolling an already rendered reel into view changes nothing a scan would hear of.
             document.querySelectorAll('svg[aria-label="Share"]').forEach(function (shareSvg) {
-              if (!onScreen(shareSvg)) return;
               var item = actionItem(shareSvg);
               if (!item) return;
               var existing = item.nextElementSibling;
@@ -122,6 +131,7 @@ object ReelSave {
                 button.addEventListener('click', function (e) {
                   e.preventDefault();
                   e.stopPropagation();
+                  if (watched(button)) bind(button, currentCode());
                   var c = button.dataset.veilCode;
                   if (!c || button.dataset.veilBusy) return;
                   button.dataset.veilBusy = '1';
@@ -131,10 +141,7 @@ object ReelSave {
                 }, true);
                 item.parentElement.insertBefore(button, item.nextSibling);
               }
-              if (button.dataset.veilCode !== code) {
-                button.dataset.veilCode = code;
-                delete button.dataset.veilBusy;
-              }
+              if (watched(button)) bind(button, code);
               paint(button);
             });
             // The saved state is learned only when the user taps the button: asking for every reel
@@ -157,11 +164,14 @@ object ReelSave {
           window.__veilReelSave = { scan: scan };
           document.addEventListener('visibilitychange', function () { if (!document.hidden) scan(); });
           var pending = false;
-          new MutationObserver(function () {
+          function later() {
             if (pending) return;
             pending = true;
             setTimeout(function () { pending = false; scan(); }, 300);
-          }).observe(document.documentElement, { childList: true, subtree: true });
+          }
+          new MutationObserver(later).observe(document.documentElement, { childList: true, subtree: true });
+          // The viewer scrolls inside its own container; scroll events don't bubble, so listen in capture.
+          document.addEventListener('scrollend', later, true);
           scan();
         })();
     """.trimIndent()
