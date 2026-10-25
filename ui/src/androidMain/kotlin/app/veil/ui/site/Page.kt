@@ -17,12 +17,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 
-/**
- * One tab's WebView and what the app knows about it. [tab] is null for a link opened on top.
- * [view] is a plain field: code scanning takes every getter call that returns a WebView for a
- * new, unhardened WebView.
- */
-internal class Page(var tab: SiteTab?, @JvmField val view: WebView, parent: CoroutineScope) {
+/** One tab's WebView and what the app knows about it. [tab] is null for a link opened on top. */
+internal class Page(var tab: SiteTab?, val view: WebView, parent: CoroutineScope) {
     /** Work tied to this page; cancelled when the page is destroyed. */
     val scope = CoroutineScope(parent.coroutineContext + SupervisorJob(parent.coroutineContext[Job]))
 
