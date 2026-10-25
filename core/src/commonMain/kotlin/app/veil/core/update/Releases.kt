@@ -59,14 +59,31 @@ object Releases {
         )
     }
 
-    /** Release notes cut down for a dialog: no trailing attribution, at most [maxChars]. */
+    /**
+     * Release notes cut down for a dialog: plain text instead of Markdown (no heading marks,
+     * emphasis, code marks or link targets; list items as bullets), no trailing attribution, at
+     * most [maxChars].
+     */
     fun shortNotes(notes: String, maxChars: Int = 600): String {
         val text = notes.lineSequence()
             .takeWhile { !it.startsWith("🤖") }
+            .map(::plainLine)
             .joinToString("\n")
+            .replace(Regex("\n{3,}"), "\n\n")
             .trim()
         return if (text.length <= maxChars) text else text.take(maxChars).substringBeforeLast('\n').trimEnd() + "\n…"
     }
+
+    private val heading = Regex("^#{1,6}\\s+")
+    private val listItem = Regex("^(\\s*)[-*+]\\s+")
+    private val link = Regex("\\[([^\\]]+)]\\([^)]*\\)")
+    private val emphasis = Regex("(\\*\\*|__|\\*|`)")
+
+    private fun plainLine(line: String): String = line
+        .replace(heading, "")
+        .replace(listItem, "$1• ")
+        .replace(link, "$1")
+        .replace(emphasis, "")
 
     @Serializable
     private data class GitHubRelease(

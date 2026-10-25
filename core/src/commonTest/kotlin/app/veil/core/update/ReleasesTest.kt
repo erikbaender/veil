@@ -70,6 +70,16 @@ class ReleasesTest {
     }
 
     @Test
+    fun shortNotesArePlainText() {
+        val notes = "## What's new\n- **Updates** from *within* the app, see `Settings`.\n" +
+            "- [Release page](https://github.com/erikbaender/veil/releases)\n\n\n\n## Install\nOpen it."
+        assertEquals(
+            "What's new\n• Updates from within the app, see Settings.\n• Release page\n\nInstall\nOpen it.",
+            Releases.shortNotes(notes),
+        )
+    }
+
+    @Test
     fun shortNotesDropTheAttributionAndStayShort() {
         assertEquals("Fixes.", Releases.shortNotes("Fixes.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n"))
         val long = (1..100).joinToString("\n") { "- change $it" }
