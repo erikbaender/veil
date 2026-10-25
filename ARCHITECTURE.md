@@ -28,13 +28,18 @@ with WKWebView.
 - **Page styling** (`core/web/PageStyle`): a stylesheet injected after each page load hides
   sponsored posts, optionally hides "Suggested for you" content, and tidies the layout so
   the site feels like part of the app. It changes appearance only.
+- **Updater** (`core/update`, `androidApp/AppUpdater`): daily check of the latest GitHub
+  release, download with checksum, size and signing-key checks, install through a
+  `PackageInstaller` session that Android asks the user to confirm.
 - **Native shell**: bottom bar (Home, Reels, Messages, Search, Profile) that drives the
   WebView, a top bar with settings, and a native settings screen.
 
 ## Privacy rules
 
 1. No analytics, crash reporting or third-party SDKs.
-2. Only Instagram hosts load. Everything else is blocked or handed to the browser.
+2. Only Instagram hosts load. Everything else is blocked or handed to the browser. The one
+   other contact is the update check: GitHub's API for this repository's latest release
+   (no token, no device details) and, when the user accepts, the release's APK.
 3. No backups or device transfer of app data. Optional screenshot blocking.
 4. No storage, contacts, location, camera or microphone permissions.
 5. Shared links are cleaned of tracking parameters.

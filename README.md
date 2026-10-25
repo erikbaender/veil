@@ -19,6 +19,9 @@ hardened WebView and wraps it in a native shell, with ads and third-party tracke
   uploads through the system Photo Picker (no storage permission), optional screenshot
   blocking, one-tap sign out that wipes cookies, storage and cache.
 - **Links:** Instagram links from other apps (or shared text containing one) open in Veil.
+- **Updates:** once a day Veil asks GitHub whether a newer release is out and offers it; the
+  download is checked against the release's checksum and Veil's signing key before Android's
+  installer asks you to confirm. Can be turned off (Settings → Updates).
 - **Save Reels:** a bookmark under Share in the Reels viewer, which the website lacks. It uses
   Instagram's own Save button on the reel's page, opened in a hidden view with your login.
 
@@ -48,6 +51,11 @@ Versions are dates: `year.month.release` (e.g. `2026.10.0`, then `2026.10.1`, `2
 runs on a website that changes under it, so how recent a build is matters more than anything a
 semantic version could say. The Android version code is the same date as a number (`20261000`).
 Set it in `androidApp/build.gradle.kts`; tag releases `v<version>`.
+
+Releases are what the in-app updater offers: it reads the latest (non-pre-)release of this
+repository, takes its tag as the version and its `.apk` asset as the update. Upload the
+release-signed APK, or installed copies refuse it. The repository must be public for the
+updater to see releases.
 
 ## Notes and limitations
 

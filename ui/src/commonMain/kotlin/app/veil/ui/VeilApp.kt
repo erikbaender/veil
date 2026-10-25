@@ -37,6 +37,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.veil.core.settings.Settings
 import app.veil.core.settings.SettingsRepository
 import app.veil.core.settings.StartTab
+import app.veil.core.update.UpdateStatus
+import app.veil.core.update.Updates
 import app.veil.core.web.ProfileLink
 import app.veil.core.web.SiteTab
 import app.veil.ui.settings.SettingsScreen
@@ -46,6 +48,7 @@ import app.veil.ui.shell.Tab
 import app.veil.ui.site.SiteController
 import app.veil.ui.site.SiteError
 import app.veil.ui.site.SiteView
+import app.veil.ui.update.UpdateDialog
 import kotlinx.coroutines.launch
 
 private val Blue = Color(0xFF0095F6)
@@ -61,6 +64,7 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun VeilApp(
     settingsRepository: SettingsRepository,
+    updates: Updates,
     versionName: String,
     /** Tab to open at launch (the last used of Home and Reels). */
     startTab: StartTab,
@@ -73,6 +77,13 @@ fun VeilApp(
     val scope = rememberCoroutineScope()
     var showSettings by remember { mutableStateOf(false) }
     val update: ((Settings) -> Settings) -> Unit = { transform -> scope.launch { settingsRepository.update(transform) } }
+    val updateStatus by updates.status.collectAsStateWithLifecycle()
+    var showUpdate by remember { mutableStateOf(false) }
+    // A newly found release is offered once; one the user put off waits in the settings.
+    LaunchedEffect(updateStatus) {
+        val found = (updateStatus as? UpdateStatus.Available)?.release ?: return@LaunchedEffect
+        if (found.version != settings.dismissedUpdate) showUpdate = true
+    }
 
     val currentTab = Tab.of(controller.selectedTab)
     // Remember the last used of Home and Reels for the next launch.
@@ -152,7 +163,27 @@ fun VeilApp(
                         controller.clearSiteData()
                         showSettings = false
                     },
+                    updateStatus = updateStatus,
+                    onCheckUpdates = updates::check,
+                    onInstallUpdate = {
+                        updates.install()
+                        showUpdate = true
+                    },
                     onBack = { showSettings = false },
+                )
+            }
+            if (showUpdate) {
+                UpdateDialog(
+                    status = updateStatus,
+                    onInstall = updates::install,
+                    onCancel = updates::cancel,
+                    onLater = {
+                        (updateStatus as? UpdateStatus.Available)?.let { found ->
+                            update { it.copy(dismissedUpdate = found.release.version) }
+                        }
+                        showUpdate = false
+                    },
+                    onClose = { showUpdate = false },
                 )
             }
         }

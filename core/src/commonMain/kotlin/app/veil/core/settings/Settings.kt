@@ -18,6 +18,12 @@ data class Settings(
     val startTab: StartTab = StartTab.HOME,
     /** Last-used tab on the own profile: "" (posts), "reels/", "saved/" or "tagged/". */
     val profileSection: String = "",
+    /** Ask GitHub once a day whether a newer Veil is out. */
+    val checkForUpdates: Boolean = true,
+    /** When the last update check ran (epoch milliseconds). */
+    val lastUpdateCheck: Long = 0,
+    /** Version whose update prompt the user put off; it isn't offered unasked again. */
+    val dismissedUpdate: String = "",
 )
 
 enum class StartTab { HOME, REELS }

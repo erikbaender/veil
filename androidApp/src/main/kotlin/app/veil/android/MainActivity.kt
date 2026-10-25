@@ -1,15 +1,21 @@
 package app.veil.android
 
 import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.runtime.getValue
@@ -19,9 +25,11 @@ import app.veil.core.web.IncomingLinks
 import app.veil.core.web.LinkSanitizer
 import app.veil.ui.VeilApp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.io.File
 
 class MainActivity : ComponentActivity() {
     /** Instagram link handed to the app, waiting to be opened by the page. */
@@ -30,7 +38,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        val settings = (application as VeilApplication).settings
+        val app = application as VeilApplication
+        val settings = app.settings
+        val updater = app.updater
         // Page inspection over adb for development; never enabled in release builds.
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
@@ -44,6 +54,23 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Updates: the daily check runs whenever the app comes to the front; the installer's
+        // confirmation is shown only while the app is in front (it can't start from the background).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                updater.checkIfDue()
+                updater.confirmation.filterNotNull().collect { confirm ->
+                    try {
+                        startActivity(confirm)
+                    } catch (_: ActivityNotFoundException) {
+                        // No installer UI; the status stays at "installing" until the user retries.
+                    }
+                    updater.confirmationShown()
+                }
+            }
+        }
+        if (BuildConfig.DEBUG) registerUpdateDiagnostics(updater)
+
         if (savedInstanceState == null) incomingUrl = linkFrom(intent)
         // Read the stored settings once so the first page is the right tab (a small local file).
         val startTab = runBlocking { settings.load() }.startTab
@@ -51,6 +78,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             VeilApp(
                 settingsRepository = settings,
+                updates = updater,
                 versionName = BuildConfig.VERSION_NAME,
                 startTab = startTab,
                 incomingUrl = incomingUrl,
@@ -63,6 +91,29 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         linkFrom(intent)?.let { incomingUrl = it }
+    }
+
+    /**
+     * Debug builds: `am broadcast -a app.veil.diag.UPDATE_LOCAL --es file <name> --ei code <versionCode>
+     * -p app.veil.client.debug` installs an APK placed in the app's cache directory. Only senders
+     * holding DUMP (the shell) can reach it.
+     */
+    private fun registerUpdateDiagnostics(updater: AppUpdater) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context, intent: Intent) {
+                val name = intent.getStringExtra("file")?.takeIf { '/' !in it } ?: return
+                updater.installLocal(File(cacheDir, name), intent.getIntExtra("code", 0))
+            }
+        }
+        val filter = IntentFilter("app.veil.diag.UPDATE_LOCAL")
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(receiver, filter, android.Manifest.permission.DUMP, null, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(receiver, filter, android.Manifest.permission.DUMP, null)
+        }
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onDestroy(owner: LifecycleOwner) = unregisterReceiver(receiver)
+        })
     }
 
     private fun linkFrom(intent: Intent?): String? = when (intent?.action) {

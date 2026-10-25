@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.veil.core.settings.Settings
+import app.veil.core.update.UpdateStatus
 import app.veil.ui.platform.SystemBackHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +38,9 @@ fun SettingsScreen(
     versionName: String,
     onUpdate: ((Settings) -> Settings) -> Unit,
     onSignOut: () -> Unit,
+    updateStatus: UpdateStatus,
+    onCheckUpdates: () -> Unit,
+    onInstallUpdate: () -> Unit,
     onBack: () -> Unit,
 ) {
     var confirmSignOut by remember { mutableStateOf(false) }
@@ -79,13 +83,26 @@ fun SettingsScreen(
             )
 
             HorizontalDivider()
+            SectionTitle("Updates")
+            if (updateStatus != UpdateStatus.Unsupported) {
+                Toggle(
+                    title = "Check for updates",
+                    summary = "Once a day, asks GitHub whether a newer Veil has been released. " +
+                        "No account or device details are sent.",
+                    checked = settings.checkForUpdates,
+                ) { value -> onUpdate { it.copy(checkForUpdates = value) } }
+            }
+            UpdateRow(updateStatus, onCheck = onCheckUpdates, onInstall = onInstallUpdate)
+
+            HorizontalDivider()
             SectionTitle("About")
             ListItem(
                 headlineContent = { Text("Veil $versionName") },
                 supportingContent = {
                     Text(
                         "Shows Instagram's website with ads and third-party trackers blocked. " +
-                            "Only Instagram's own servers are contacted. No analytics, no backups of your data.",
+                            "Only Instagram's own servers are contacted, and GitHub for updates. " +
+                            "No analytics, no backups of your data.",
                     )
                 },
             )
@@ -106,6 +123,32 @@ fun SettingsScreen(
             dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") } },
         )
     }
+}
+
+@Composable
+private fun UpdateRow(status: UpdateStatus, onCheck: () -> Unit, onInstall: () -> Unit) {
+    val (title, summary) = when (status) {
+        UpdateStatus.Idle -> "Check now" to null
+        UpdateStatus.Checking -> "Checking…" to null
+        UpdateStatus.UpToDate -> "Veil is up to date" to "Tap to check again."
+        is UpdateStatus.Available -> "Update to Veil ${status.release.version}" to "Tap to download and install."
+        is UpdateStatus.Downloading -> "Downloading Veil ${status.release.version}…" to
+            status.progress?.let { "${(it * 100).toInt()} %" }
+        is UpdateStatus.Installing -> "Installing Veil ${status.release.version}…" to "Confirm in Android's installer."
+        is UpdateStatus.Failed -> (status.release?.let { "Update to Veil ${it.version}" } ?: "Check now") to status.message
+        UpdateStatus.Unsupported -> "Updates" to "Debug builds don't update themselves."
+    }
+    val action: (() -> Unit)? = when (status) {
+        UpdateStatus.Idle, UpdateStatus.UpToDate -> onCheck
+        is UpdateStatus.Available -> onInstall
+        is UpdateStatus.Failed -> if (status.release != null) onInstall else onCheck
+        else -> null
+    }
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = summary?.let { { Text(it) } },
+        modifier = if (action != null) Modifier.clickable(onClick = action) else Modifier,
+    )
 }
 
 @Composable
