@@ -36,7 +36,7 @@ internal class ReelSaveHelper(
     private val onAuthPage: (AuthPaths.Kind) -> Unit,
 ) {
     /** A plain field, as [Page.view] is. */
-    @JvmField val view: WebView = WebView(context)
+    @JvmField val view: WebView
 
     private val mutex = Mutex()
     private var loadedCode: String? = null
@@ -45,12 +45,13 @@ internal class ReelSaveHelper(
     private var dead = false
 
     init {
-        view.applyHardening()
-        // Setter calls rather than property syntax: code scanning reads `view.alpha = …` as a
-        // WebView it can't see hardened.
-        view.setAlpha(0f)
-        view.setFocusable(false)
-        view.setImportantForAccessibility(WebView.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS)
+        // Set up as SiteHost creates pages, which code scanning can follow to the hardening.
+        val webView = WebView(context)
+        webView.applyHardening()
+        webView.alpha = 0f
+        webView.isFocusable = false
+        webView.importantForAccessibility = WebView.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        view = webView
         // The helper never plays anything, even for a moment.
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             WebViewCompat.addDocumentStartJavaScript(view, PageScripts.HELPER_MEDIA_OFF, setOf(TabPaths.ORIGIN))
