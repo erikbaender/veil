@@ -9,9 +9,9 @@ Veil never talks to Instagram except through that website.
 
 | Module | Kind | Contents |
 |---|---|---|
-| `:core` | KMP library (no UI) | settings model and storage, host allowlist, link cleaning, page-styling rules |
+| `:core` | KMP library (no UI) | settings model and storage, host allowlist, link cleaning, page-styling rules, release parsing for updates |
 | `:ui` | KMP library (Compose Multiplatform) | theme, native shell (bottom bar, top bar, settings screen), WebView host (androidMain) |
-| `:androidApp` | Android application | `Application`, `MainActivity`, intents (share/open links), platform wiring |
+| `:androidApp` | Android application | `Application`, `MainActivity`, intents (share/open links), self-updater, platform wiring |
 
 `commonMain` stays free of JVM/Android APIs so an iOS app can later reuse the shell logic
 with WKWebView.
@@ -20,7 +20,8 @@ with WKWebView.
 
 - **WebView host** (`ui/androidMain`): isolated storage for the app, JavaScript enabled,
   third-party cookies off, file uploads through the system Photo Picker, no geolocation,
-  no camera/microphone grants, safe browsing on, no remote debugging in release builds.
+  no camera/microphone grants, no remote debugging in release builds. Safe Browsing is off:
+  only Instagram hosts load, so its lookups would only tell Google what you browse.
 - **Host allowlist** (`core/web/HostPolicy`): the WebView may only load Instagram and its
   media CDNs. Every other request is blocked inside `shouldInterceptRequest`, which removes
   third-party trackers. Navigations to other sites open in the system browser after
@@ -46,6 +47,7 @@ with WKWebView.
 
 ## Development rules
 
-- Build with `tools/gradlew-locked …`.
-- Unit tests in `commonTest` for settings, host allowlist, link cleaning and styling rules.
-- Testing on the redroid device. Never interact with other people's accounts while testing.
+- Build with `./gradlew …`, or `tools/gradlew-locked …` to keep parallel builds from running at once.
+- Unit tests in `commonTest` for settings, host allowlist, link cleaning, styling rules and releases.
+- Test on a device or emulator with your own test account. Never interact with other people's
+  accounts while testing.

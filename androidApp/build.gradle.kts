@@ -10,7 +10,7 @@ plugins {
  * that changes under it, so what matters is how recent a build is. The Android version code is
  * the same date as a number (2026.10.0 -> 20261000), so it always increases.
  */
-val veilVersion = "2026.10.0"
+val veilVersion = "2026.10.1"
 val veilVersionCode = veilVersion.split('.').map(String::toInt).let { (year, month, release) ->
     require(month in 1..12 && release in 0..99) { "version must be year.month.release" }
     year * 10_000 + month * 100 + release
