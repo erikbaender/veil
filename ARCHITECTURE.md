@@ -36,7 +36,9 @@ with WKWebView.
   `androidApp/MessageAlerts`): the number on the site's own Messages link is read from the
   open pages for the tab's badge. If the user turns notifications on, a WorkManager job
   (15 minutes, Android's minimum) loads the start page in a hidden WebView with media
-  blocked, reads the same number and notifies when it is higher than the user already knew.
+  blocked and reads the same number. When it is higher than the user already knew, it opens
+  the inbox list (never a chat), reads the unread rows' names and latest lines and notifies;
+  the lock-screen version shows only the count.
   It skips while the app is in front, and stops at sign-in or security-check pages until
   the user opens the app.
 - **Native shell**: bottom bar (Home, Reels, Messages, Search, Profile) that drives the
@@ -49,7 +51,7 @@ with WKWebView.
    other contact is the update check: GitHub's API for this repository's latest release
    (no token, no device details) and, when the user accepts, the release's APK.
    With message notifications on, Instagram's start page also loads in the background
-   about every 15 minutes (the same login, no media).
+   about every 15 minutes (the same login, no media), and the inbox list when there is news.
 3. No backups or device transfer of app data. Optional screenshot blocking.
 4. No storage, contacts, location, camera or microphone permissions.
 5. Shared links are cleaned of tracking parameters.

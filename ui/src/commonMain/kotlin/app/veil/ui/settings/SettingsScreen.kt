@@ -86,8 +86,8 @@ fun SettingsScreen(
             SectionTitle("Notifications")
             Toggle(
                 title = "Unread messages",
-                summary = "While Veil is closed, checks Instagram about every 15 minutes and tells you how many " +
-                    "chats are unread. No names or message text. Android may check less often to save battery.",
+                summary = "While Veil is closed, checks Instagram about every 15 minutes and tells you who wrote. " +
+                    "The lock screen shows only how many chats are unread. Android may check less often to save battery.",
                 checked = settings.messageNotifications,
             ) { value -> onUpdate { it.copy(messageNotifications = value, messageChecksHeld = false) } }
 

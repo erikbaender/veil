@@ -31,6 +31,30 @@ class UnreadMessagesTest {
     }
 
     @Test
+    fun parsesChatsFromTheInbox() {
+        assertEquals(
+            listOf(UnreadChat("Anna", "See you!"), UnreadChat("Ben", "")),
+            UnreadMessages.parseChats("""[{"name":"Anna","preview":"See you!"},{"name":"Ben","preview":""},{"name":" ","preview":"x"}]"""),
+        )
+        assertEquals(emptyList(), UnreadMessages.parseChats("[]"))
+        assertNull(UnreadMessages.parseChats("null"))
+        assertNull(UnreadMessages.parseChats(""))
+        assertTrue(UnreadMessages.CHATS_SCRIPT.trim().startsWith("(function"))
+    }
+
+    @Test
+    fun namesWhoWrote() {
+        val anna = UnreadChat("Anna", "Hi")
+        val ben = UnreadChat("Ben", "Hey")
+        val cleo = UnreadChat("Cleo", "Yo")
+        assertEquals("Anna", UnreadMessages.senders(1, listOf(anna)))
+        assertEquals("Anna and Ben", UnreadMessages.senders(2, listOf(anna, ben)))
+        assertEquals("Anna, Ben and 1 more", UnreadMessages.senders(3, listOf(anna, ben, cleo)))
+        assertEquals("Anna and 3 more", UnreadMessages.senders(4, listOf(anna)))
+        assertEquals("2 unread chats", UnreadMessages.senders(2, emptyList()))
+    }
+
+    @Test
     fun notificationTextIsOnlyACount() {
         assertEquals("1 unread chat", UnreadMessages.notificationText(1))
         assertEquals("4 unread chats", UnreadMessages.notificationText(4))

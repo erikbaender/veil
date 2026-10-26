@@ -23,9 +23,10 @@ hardened WebView and wraps it in a native shell, with ads and third-party tracke
   download is checked against the release's checksum and Veil's signing key before Android's
   installer asks you to confirm. Can be turned off (Settings → Updates).
 - **Unread messages:** a badge on the Messages tab. Optionally (Settings → Notifications),
-  Veil checks about every 15 minutes while closed and notifies you how many chats are unread:
-  only the number, no names or message text. The check opens Instagram's start page without
-  pictures or video in a hidden view, never the inbox, so nothing is marked as read.
+  Veil checks about every 15 minutes while closed and notifies you who wrote, with their latest
+  message as the inbox list shows it (the lock screen shows only how many). The check opens
+  Instagram's start page without pictures or video in a hidden view, and the inbox list only
+  when there is something new. It never opens a chat, so nothing is marked as read.
 - **Save Reels:** a bookmark under Share in the Reels viewer, which the website lacks. It uses
   Instagram's own Save button on the reel's page, opened in a hidden view with your login.
 
@@ -67,8 +68,8 @@ updater to see releases.
   website offers. Hiding of ads and suggested posts relies on their visible labels
   (English and German).
 - Message notifications are a periodic check, not push: they can arrive up to about 15
-  minutes late (longer when Android saves battery), and they say how many chats are unread
-  rather than who wrote. With them off, the app only talks to Instagram while open.
+  minutes late (longer when Android saves battery). If Instagram changes how its inbox marks
+  unread chats, they fall back to saying how many are unread. With them off, the app only talks to Instagram while open.
 - Requires Android 12 (API 31) or newer and an up-to-date Android System WebView.
 
 ## Project layout

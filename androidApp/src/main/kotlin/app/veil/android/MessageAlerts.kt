@@ -19,6 +19,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import app.veil.core.web.UnreadChat
 import app.veil.core.web.UnreadMessages
 import app.veil.ui.site.UnreadCheck
 import java.util.concurrent.TimeUnit
@@ -27,7 +28,8 @@ import java.util.concurrent.TimeUnit
  * Unread-message notifications. Instagram's site can't push to a WebView app, so while the app
  * is away a background job looks at the unread badge about every 15 minutes (Android's shortest
  * interval for such jobs; it stretches them further when the phone is idle) and notifies when
- * more chats are unread than the user knew about. The notification says how many, nothing more.
+ * more chats are unread than the user knew about: who wrote and their latest message, as the
+ * inbox list shows them. The lock screen shows only how many.
  */
 object MessageAlerts {
     private const val WORK = "unread-messages"
@@ -64,11 +66,11 @@ object MessageAlerts {
         Build.VERSION.SDK_INT < 33 ||
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-    private fun notify(context: Context, unread: Int) {
+    private fun notify(context: Context, unread: Int, chats: List<UnreadChat>) {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL, "Unread messages", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "How many chats are unread, checked about every 15 minutes."
+                description = "Who wrote, checked about every 15 minutes."
             },
         )
         val open = Intent(context, MainActivity::class.java)
@@ -76,10 +78,33 @@ object MessageAlerts {
             .putExtra(EXTRA_OPEN_MESSAGES, true)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val tap = PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val notification = NotificationCompat.Builder(context, CHANNEL)
+        // On the lock screen: only the count.
+        val public = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(UnreadMessages.notificationText(unread))
-            .setContentText("Tap to open your messages.")
+            .build()
+        val first = chats.firstOrNull()
+        val notification = NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(UnreadMessages.senders(unread, chats))
+            .setContentText(
+                when {
+                    first == null -> "Tap to open your messages."
+                    chats.size == 1 -> first.preview.ifEmpty { "New message" }
+                    else -> UnreadMessages.notificationText(unread)
+                },
+            )
+            .apply {
+                if (chats.size > 1) {
+                    val lines = NotificationCompat.InboxStyle().setSummaryText(UnreadMessages.notificationText(unread))
+                    chats.forEach { chat -> lines.addLine(if (chat.preview.isEmpty()) chat.name else "${chat.name}: ${chat.preview}") }
+                    setStyle(lines)
+                } else if (first != null && first.preview.isNotEmpty()) {
+                    setStyle(NotificationCompat.BigTextStyle().bigText(first.preview))
+                }
+            }
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(public)
             .setNumber(unread)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setContentIntent(tap)
@@ -96,12 +121,12 @@ object MessageAlerts {
             val current = settings.load()
             // Off, held after a sign-in or security check, or the app is in front with its own badge.
             if (!current.messageNotifications || current.messageChecksHeld || UnreadCheck.appInFront) return Result.success()
-            when (val result = UnreadCheck.run(app)) {
+            when (val result = UnreadCheck.run(app, current.knownUnread)) {
                 is UnreadCheck.Result.Count -> {
                     val unread = result.unread
-                    Log.d("Veil", "unread check: $unread (known ${current.knownUnread})")
+                    Log.d("Veil", "unread check: $unread (known ${current.knownUnread}, ${result.chats.size} named)")
                     if (UnreadMessages.isNews(unread, current.knownUnread) && canNotify(app) && !UnreadCheck.appInFront) {
-                        notify(app, unread)
+                        notify(app, unread, result.chats)
                     }
                     if (unread == 0) cancel(app)
                     if (unread != current.knownUnread) settings.update { it.copy(knownUnread = unread) }
