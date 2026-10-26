@@ -83,6 +83,15 @@ fun SettingsScreen(
             )
 
             HorizontalDivider()
+            SectionTitle("Notifications")
+            Toggle(
+                title = "Unread messages",
+                summary = "While Veil is closed, checks Instagram about every 15 minutes and tells you how many " +
+                    "chats are unread. No names or message text. Android may check less often to save battery.",
+                checked = settings.messageNotifications,
+            ) { value -> onUpdate { it.copy(messageNotifications = value, messageChecksHeld = false) } }
+
+            HorizontalDivider()
             SectionTitle("Updates")
             if (updateStatus != UpdateStatus.Unsupported) {
                 Toggle(

@@ -36,6 +36,7 @@ import app.veil.core.web.ProfileLink
 import app.veil.core.web.ReelSave
 import app.veil.core.web.SiteTab
 import app.veil.core.web.TabPaths
+import app.veil.core.web.UnreadMessages
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -59,6 +60,8 @@ internal object HostSession {
     var preloadHoldUntil = 0L
     /** When the browser engine was lost (killed or crashed). */
     val engineDeaths = mutableListOf<Long>()
+    /** The app's screen is in front (its pages run); otherwise the engine's timers are paused. */
+    @Volatile var inFront = false
 }
 
 /**
@@ -127,6 +130,7 @@ internal class SiteHost(
 
     init {
         stack.onHeightChanged = { allPages().forEach(::applyHeight) }
+        session.inFront = true
         val first = createPage(selected)
         active = first
         commit(first)
@@ -857,6 +861,7 @@ internal class SiteHost(
     fun onStart() {
         if (started) return
         started = true
+        session.inFront = true
         livePage()?.view?.resumeTimers()
         if (!active.dead) active.view.onResume()
         if (recovery != null && !rendererGone) rebuild()
@@ -869,6 +874,7 @@ internal class SiteHost(
     fun onStop() {
         if (!started) return
         started = false
+        session.inFront = false
         backgroundedAt = now()
         if (!active.dead) active.view.onPause()
         // Pages do no work at all while the app is out of sight.
@@ -1049,6 +1055,21 @@ internal class SiteHost(
         val page = active
         val css = page.eval(PageStyle.RESERVED_BOTTOM_SCRIPT, 500)?.trim('"')?.toDoubleOrNull() ?: return
         if (page === active) setReserved(page, css)
+    }
+
+    /** Reads the unread-chats badge from the shown page (or another loaded one) for the Messages tab. */
+    suspend fun pollUnread() {
+        if (account != Account.LOGGED_IN) {
+            controller.unreadMessages = null
+            return
+        }
+        val candidates = listOf(active) + hiddenPages().filter { it.loadedOnce && !it.loading }
+        for (page in candidates) {
+            if (page.dead) continue
+            val count = UnreadMessages.parse(page.eval(UnreadMessages.SCRIPT, 500)) ?: continue
+            controller.unreadMessages = count
+            return
+        }
     }
 
     fun evaluateEverywhere(script: String) = allPages().filter { !it.dead }.forEach { it.view.evaluateJavascript(script, null) }

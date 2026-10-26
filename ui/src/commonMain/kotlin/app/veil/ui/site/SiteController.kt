@@ -55,6 +55,10 @@ class SiteController(startTab: SiteTab = SiteTab.HOME) {
     var error by mutableStateOf<SiteError?>(null)
         internal set
 
+    /** Chats with unread messages, from the site's own badge; null while unknown (signed out, loading). */
+    var unreadMessages by mutableStateOf<Int?>(null)
+        internal set
+
     /** Incremented whenever the app starts a navigation (tab load, link, reload); drives the loading veil. */
     var navigationCount by mutableStateOf(1)
         private set

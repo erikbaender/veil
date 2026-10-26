@@ -70,6 +70,9 @@ fun VeilApp(
     startTab: StartTab,
     incomingUrl: String?,
     onIncomingUrlConsumed: () -> Unit,
+    /** Tab to switch to (Messages, from a notification). */
+    incomingTab: SiteTab?,
+    onIncomingTabConsumed: () -> Unit,
     onOpenExternal: (String) -> Unit,
 ) {
     val settings by settingsRepository.settings.collectAsStateWithLifecycle()
@@ -110,6 +113,19 @@ fun VeilApp(
         }
     }
 
+    LaunchedEffect(incomingTab) {
+        if (incomingTab != null) {
+            showSettings = false
+            controller.selectTab(incomingTab)
+            onIncomingTabConsumed()
+        }
+    }
+    // Unread chats seen in the app are known; only more than these are notified later.
+    LaunchedEffect(controller.unreadMessages) {
+        val unread = controller.unreadMessages ?: return@LaunchedEffect
+        update { if (it.knownUnread == unread) it else it.copy(knownUnread = unread) }
+    }
+
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors) {
         Surface(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize()) {
@@ -148,6 +164,7 @@ fun VeilApp(
                 if (!controller.storyOpen) {
                     BottomBar(
                         currentTab = currentTab,
+                        unreadMessages = controller.unreadMessages ?: 0,
                         onSelect = { tab -> controller.selectTab(tab.site) },
                         onOpenSettings = { showSettings = true },
                     )

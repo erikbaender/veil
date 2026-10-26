@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon: the launcher mark, cropped to its content. Only alpha matters. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="76"
+    android:viewportHeight="76">
+    <group android:translateX="-16" android:translateY="-17">
+        <path
+            android:pathData="M54,43a17,17 0,1 1,0 34a17,17 0,1 1,0 -34z"
+            android:strokeWidth="5.5"
+            android:strokeColor="#FFFFFFFF"
+            android:fillColor="#00000000" />
+        <path
+            android:pathData="M20,30H88V44C76,46 66,52 56.6,65.6Q54,68.6 51.4,65.6C42,52 32,46 20,44Z"
+            android:fillColor="#99FFFFFF" />
+    </group>
+</vector>

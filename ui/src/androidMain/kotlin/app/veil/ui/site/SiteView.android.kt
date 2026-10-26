@@ -112,6 +112,12 @@ actual fun SiteView(
             launch { host.runPreloader() }
             launch {
                 while (true) {
+                    host.pollUnread()
+                    delay(10_000)
+                }
+            }
+            launch {
+                while (true) {
                     host.pollReserved()
                     delay(500)
                 }

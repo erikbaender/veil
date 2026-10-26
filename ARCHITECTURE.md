@@ -32,6 +32,13 @@ with WKWebView.
 - **Updater** (`core/update`, `androidApp/AppUpdater`): daily check of the latest GitHub
   release, download with checksum, size and signing-key checks, install through a
   `PackageInstaller` session that Android asks the user to confirm.
+- **Unread messages** (`core/web/UnreadMessages`, `ui/site/UnreadCheck`,
+  `androidApp/MessageAlerts`): the number on the site's own Messages link is read from the
+  open pages for the tab's badge. If the user turns notifications on, a WorkManager job
+  (15 minutes, Android's minimum) loads the start page in a hidden WebView with media
+  blocked, reads the same number and notifies when it is higher than the user already knew.
+  It skips while the app is in front, and stops at sign-in or security-check pages until
+  the user opens the app.
 - **Native shell**: bottom bar (Home, Reels, Messages, Search, Profile) that drives the
   WebView, a top bar with settings, and a native settings screen.
 
@@ -41,6 +48,8 @@ with WKWebView.
 2. Only Instagram hosts load. Everything else is blocked or handed to the browser. The one
    other contact is the update check: GitHub's API for this repository's latest release
    (no token, no device details) and, when the user accepts, the release's APK.
+   With message notifications on, Instagram's start page also loads in the background
+   about every 15 minutes (the same login, no media).
 3. No backups or device transfer of app data. Optional screenshot blocking.
 4. No storage, contacts, location, camera or microphone permissions.
 5. Shared links are cleaned of tracking parameters.
